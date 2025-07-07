@@ -1,0 +1,110 @@
+*{
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    box-sizing: border-box;
+}
+
+:root{
+    --main-color: #f1faee;
+    --sec-color: #3e5c76;
+    --tert-color: #778da9;
+}
+
+body{
+    background-color: var(--main-color);
+    color: var(--sec-color);
+}
+
+#top{
+    display: flex;
+    flex-direction: column;
+}
+
+#cute-sticker{
+    object-fit: contain;
+    height: 150px;
+    margin-top: 100px;
+}
+
+h1{
+    text-align: center;
+    margin: 10px auto 80px auto;
+    font-weight: 600;
+}
+form{
+    width: 90%;
+    max-width: 600px;
+    margin: auto;
+    height: 80px;
+    background-color: var(--sec-color);
+    display: flex;
+    align-items: center;
+    border-radius: 100px;
+}
+form input{
+    flex: 1;
+    margin: 50px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    padding: 0 30px;
+    color: var(--main-color);
+    font-weight: bold;
+}
+input::placeholder{
+    color: var(--main-color);
+    font-weight: bold;
+}
+#search-btn{
+    margin-right: 50px;
+    padding: 10px 20px;
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+    border-radius: 100px;
+    background-color: var(--main-color);
+    color: var(--sec-color);
+    width: 15%;
+}
+#search-btn:hover{
+    background-color: var(--tert-color);
+    color: var(--main-color);
+    font-weight: bold;
+}
+#show-more-btn{
+    margin: 80px auto;
+    padding: 10px 20px;
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+    border-radius: 100px;
+    background-color: var(--sec-color);
+    color: var(--main-color);
+    display: none;
+}
+#show-more-btn:hover{
+    background-color: var(--tert-color);
+    font-weight: bold;
+}
+#search-result{
+    width: 60%;
+    margin: 50px auto 50px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-gap: 10px;
+}
+#search-result img{
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+}
+
+footer{
+    display: none;
+    background-color: var(--sec-color);
+    color: var(--main-color);
+    font-size: 8px;
+    height: 10vh;
+
+}
