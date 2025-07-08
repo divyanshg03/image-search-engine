@@ -1,56 +1,60 @@
 /**
  * Smart Image Search Engine
- * Advanced features for Amazon SDE Internship Application
+ * A simple image search application
  * 
  * Features:
- * - Debounced search with performance optimization
- * - Caching mechanism with LRU eviction
- * - Error handling and retry logic
- * - Analytics and metrics tracking
- * - Advanced filtering and sorting
- * - Responsive lazy loading
+ * - Simple search functionality
+ * - Basic caching for performance
+ * - Error handling
+ * - Search analytics
+ * - Image filtering options
+ * - Responsive design
  * - Accessibility support
  */
 
-class SmartImageSearchEngine {
-    constructor() {
-        // API Configuration
-        this.accessKey = "lWzvu2EbJpIytiuOpu4RydibVjMOytYV4DyVMosG2aU";
-        this.baseURL = "https://api.unsplash.com/search/photos";
-        this.perPage = 20;
-        
-        // State Management
-        this.currentQuery = "";
-        this.currentPage = 1;
-        this.isLoading = false;
-        this.hasMoreResults = true;
-        this.currentFilters = {
-            orientation: "",
-            color: "",
-            order_by: "relevant"
-        };
-        
-        // Performance & Analytics
-        this.cache = new Map();
-        this.maxCacheSize = 50;
-        this.searchMetrics = {
-            totalSearches: parseInt(localStorage.getItem('totalSearches') || '0'),
-            totalResponseTime: parseInt(localStorage.getItem('totalResponseTime') || '0'),
-            searchHistory: JSON.parse(localStorage.getItem('searchHistory') || '[]'),
-            cacheHits: parseInt(localStorage.getItem('cacheHits') || '0')
-        };
-        
-        // Debouncing
-        this.debounceTimer = null;
-        this.debounceDelay = 300;
-        
-        // DOM Elements
+// Main search functionality as a JavaScript object
+const imageSearch = {
+    // API Configuration
+    accessKey: "lWzvu2EbJpIytiuOpu4RydibVjMOytYV4DyVMosG2aU",
+    baseURL: "https://api.unsplash.com/search/photos",
+    perPage: 50,
+    
+    // State Management
+    currentQuery: "",
+    currentPage: 1,
+    isLoading: false,
+    hasMoreResults: true,
+    currentFilters: {
+        orientation: "",
+        color: "",
+        order_by: "relevant"
+    },
+    
+    // Simple cache and analytics
+    cache: {},
+    searchMetrics: {
+        totalSearches: 0,
+        totalResponseTime: 0,
+        searchHistory: [],
+        cacheHits: 0
+    },
+    
+    // Debouncing
+    debounceTimer: null,
+    debounceDelay: 300,
+    
+    // Initialize the application
+    init: function() {
+        this.loadStoredData();
         this.initializeElements();
         this.setupEventListeners();
-        this.loadStoredData();
-    }
+        this.setupBasicLazyLoading();
+    },
 
-    initializeElements() {
+    // Store DOM elements for easy access
+    elements: {},
+    
+    initializeElements: function() {
         this.elements = {
             searchForm: document.getElementById("search-form"),
             searchBox: document.getElementById("search-box"),
@@ -73,47 +77,77 @@ class SmartImageSearchEngine {
             searchTime: document.getElementById("search-time"),
             lastUpdated: document.getElementById("last-updated")
         };
-    }
+    },
 
-    setupEventListeners() {
+    setupEventListeners: function() {
         // Search functionality
-        this.elements.searchForm.addEventListener("submit", (e) => this.handleSearch(e));
-        this.elements.searchBtn.addEventListener("click", (e) => this.handleSearch(e));
-        this.elements.showMoreBtn.addEventListener("click", () => this.loadMoreImages());
-        this.elements.retryBtn.addEventListener("click", () => this.retrySearch());
+        const self = this;
+        this.elements.searchForm.addEventListener("submit", function(e) { 
+            self.handleSearch(e); 
+        });
+        this.elements.searchBtn.addEventListener("click", function(e) { 
+            self.handleSearch(e); 
+        });
+        this.elements.showMoreBtn.addEventListener("click", function() { 
+            self.loadMoreImages(); 
+        });
+        this.elements.retryBtn.addEventListener("click", function() { 
+            self.retrySearch(); 
+        });
 
         // Real-time search with debouncing
-        this.elements.searchBox.addEventListener("input", (e) => this.handleInputChange(e));
+        this.elements.searchBox.addEventListener("input", function(e) { 
+            self.handleInputChange(e); 
+        });
         
         // Filter controls
-        this.elements.toggleFilters.addEventListener("click", () => this.toggleFilters());
-        this.elements.clearFilters.addEventListener("click", () => this.clearAllFilters());
+        this.elements.toggleFilters.addEventListener("click", function() { 
+            self.toggleFilters(); 
+        });
+        this.elements.clearFilters.addEventListener("click", function() { 
+            self.clearAllFilters(); 
+        });
         
         // Filter change handlers
-        [this.elements.orientationFilter, this.elements.colorFilter, this.elements.sortFilter]
-            .forEach(filter => filter.addEventListener("change", () => this.applyFilters()));
+        const filters = [this.elements.orientationFilter, this.elements.colorFilter, this.elements.sortFilter];
+        filters.forEach(function(filter) {
+            filter.addEventListener("change", function() {
+                self.applyFilters();
+            });
+        });
 
         // Keyboard shortcuts
-        document.addEventListener("keydown", (e) => this.handleKeyboardShortcuts(e));
-        
-        // Intersection Observer for lazy loading
-        this.setupIntersectionObserver();
-    }
+        document.addEventListener("keydown", function(e) {
+            self.handleKeyboardShortcuts(e);
+        });
+    },
+    
+    setupBasicLazyLoading: function() {
+        // Use basic browser lazy loading
+        if ('loading' in HTMLImageElement.prototype) {
+            // Browser supports 'loading' attribute
+            // Modern browsers handle this automatically
+        } else {
+            // Fallback for browsers that don't support native lazy loading
+            this.setupIntersectionObserver();
+        }
+    },
 
-    handleInputChange(e) {
+    handleInputChange: function(e) {
         clearTimeout(this.debounceTimer);
         const query = e.target.value.trim();
+        const self = this;
         
         if (query.length >= 2) {
-            this.debounceTimer = setTimeout(() => {
-                this.performSearch(query, true);
+            this.debounceTimer = setTimeout(function() {
+                self.performSearch(query, true);
             }, this.debounceDelay);
         } else if (query.length === 0) {
             this.clearResults();
         }
-    }
+    },
 
-    handleSearch(e) {
+    handleSearch: function(e) {
         e.preventDefault();
         clearTimeout(this.debounceTimer);
         const query = this.elements.searchBox.value.trim();
@@ -121,9 +155,9 @@ class SmartImageSearchEngine {
         if (query) {
             this.performSearch(query, true);
         }
-    }
+    },
 
-    handleKeyboardShortcuts(e) {
+    handleKeyboardShortcuts: function(e) {
         // Ctrl/Cmd + K to focus search
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
@@ -135,9 +169,10 @@ class SmartImageSearchEngine {
             this.clearResults();
             this.elements.searchBox.value = '';
         }
-    }
+    },
 
-    async performSearch(query, isNewSearch = false) {
+    performSearch: function(query, isNewSearch) {
+        const self = this;
         if (this.isLoading) return;
         
         try {
@@ -155,8 +190,8 @@ class SmartImageSearchEngine {
 
             // Check cache first
             const cacheKey = this.generateCacheKey(query, this.currentPage, this.currentFilters);
-            if (this.cache.has(cacheKey)) {
-                const cachedData = this.cache.get(cacheKey);
+            if (this.cache[cacheKey]) {
+                const cachedData = this.cache[cacheKey];
                 this.displayResults(cachedData, isNewSearch);
                 this.searchMetrics.cacheHits++;
                 this.setLoadingState(false);
@@ -169,36 +204,44 @@ class SmartImageSearchEngine {
             // Build API URL
             const url = this.buildAPIUrl(query, this.currentPage, this.currentFilters);
             
-            // Fetch data
-            const response = await fetch(url);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-            const endTime = performance.now();
-            const responseTime = endTime - startTime;
-
-            // Cache the result
-            this.addToCache(cacheKey, data);
-
-            // Display results
-            this.displayResults(data, isNewSearch);
-            
-            // Update metrics
-            this.updateSearchStats(data.total, responseTime, false);
-            this.trackSearch(query, responseTime);
-
+            // Fetch data using regular fetch API
+            fetch(url)
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    const endTime = performance.now();
+                    const responseTime = endTime - startTime;
+                    
+                    // Cache the result
+                    self.addToCache(cacheKey, data);
+                    
+                    // Display results
+                    self.displayResults(data, isNewSearch);
+                    
+                    // Update metrics
+                    self.updateSearchStats(data.total, responseTime, false);
+                    self.trackSearch(query, responseTime);
+                })
+                .catch(function(error) {
+                    console.error("Search error:", error);
+                    self.showError(error.message);
+                })
+                .finally(function() {
+                    self.setLoadingState(false);
+                });
+                
         } catch (error) {
-            console.error("Search error:", error);
+            console.error("Search preparation error:", error);
             this.showError(error.message);
-        } finally {
             this.setLoadingState(false);
         }
-    }
+    },
 
-    buildAPIUrl(query, page, filters) {
+    buildAPIUrl: function(query, page, filters) {
         const params = new URLSearchParams({
             query: query,
             page: page.toString(),
@@ -212,22 +255,25 @@ class SmartImageSearchEngine {
         if (filters.order_by) params.append('order_by', filters.order_by);
 
         return `${this.baseURL}?${params.toString()}`;
-    }
+    },
 
-    generateCacheKey(query, page, filters) {
+    generateCacheKey: function(query, page, filters) {
         return `${query}_${page}_${JSON.stringify(filters)}`;
-    }
+    },
 
-    addToCache(key, data) {
-        // LRU Cache implementation
-        if (this.cache.size >= this.maxCacheSize) {
-            const firstKey = this.cache.keys().next().value;
-            this.cache.delete(firstKey);
+    addToCache: function(key, data) {
+        // Simple cache implementation
+        this.cache[key] = data;
+        
+        // Basic cache management (keep size reasonable)
+        const keys = Object.keys(this.cache);
+        if (keys.length > 20) {
+            // Remove oldest entry if cache gets too large
+            delete this.cache[keys[0]];
         }
-        this.cache.set(key, data);
-    }
+    },
 
-    displayResults(data, isNewSearch) {
+    displayResults: function(data, isNewSearch) {
         const results = data.results || [];
         
         if (isNewSearch) {
@@ -240,18 +286,19 @@ class SmartImageSearchEngine {
         }
 
         // Create image elements with lazy loading
-        results.forEach((result, index) => {
-            const imageContainer = this.createImageElement(result, index);
-            this.elements.searchResult.appendChild(imageContainer);
+        const self = this;
+        results.forEach(function(result, index) {
+            const imageContainer = self.createImageElement(result, index);
+            self.elements.searchResult.appendChild(imageContainer);
         });
 
         // Update pagination state
         this.hasMoreResults = results.length === this.perPage;
         this.updateLoadMoreButton();
         this.elements.searchStats.classList.remove('hidden');
-    }
+    },
 
-    createImageElement(result, index) {
+    createImageElement: function(result, index) {
         const container = document.createElement("div");
         container.className = "image-container";
         
@@ -296,44 +343,45 @@ class SmartImageSearchEngine {
         container.appendChild(metadata);
 
         return container;
-    }
+    },
 
-    setupIntersectionObserver() {
-        this.imageObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
+    setupIntersectionObserver: function() {
+        const self = this;
+        this.imageObserver = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
                 if (entry.isIntersecting) {
                     const img = entry.target;
                     if (img.dataset.src) {
                         img.src = img.dataset.src;
                         img.removeAttribute('data-src');
-                        this.imageObserver.unobserve(img);
+                        self.imageObserver.unobserve(img);
                     }
                 }
             });
         }, { rootMargin: '50px' });
-    }
+    },
 
-    loadMoreImages() {
+    loadMoreImages: function() {
         if (this.hasMoreResults && !this.isLoading) {
             this.currentPage++;
             this.performSearch(this.currentQuery, false);
         }
-    }
+    },
 
-    retrySearch() {
+    retrySearch: function() {
         if (this.currentQuery) {
             this.performSearch(this.currentQuery, true);
         }
-    }
+    },
 
     // Filter Management
-    toggleFilters() {
+    toggleFilters: function() {
         const isHidden = this.elements.filtersContainer.classList.contains('hidden');
         this.elements.filtersContainer.classList.toggle('hidden', !isHidden);
         this.elements.toggleFilters.textContent = isHidden ? 'Hide Filters' : 'Advanced Filters';
-    }
+    },
 
-    applyFilters() {
+    applyFilters: function() {
         this.currentFilters = {
             orientation: this.elements.orientationFilter.value,
             color: this.elements.colorFilter.value,
@@ -343,17 +391,17 @@ class SmartImageSearchEngine {
         if (this.currentQuery) {
             this.performSearch(this.currentQuery, true);
         }
-    }
+    },
 
-    clearAllFilters() {
+    clearAllFilters: function() {
         this.elements.orientationFilter.value = '';
         this.elements.colorFilter.value = '';
         this.elements.sortFilter.value = 'relevant';
         this.applyFilters();
-    }
+    },
 
     // UI State Management
-    setLoadingState(isLoading) {
+    setLoadingState: function(isLoading) {
         this.isLoading = isLoading;
         
         if (isLoading) {
@@ -365,26 +413,26 @@ class SmartImageSearchEngine {
             this.elements.showMoreBtn.querySelector('.btn-text').textContent = 'Load More Images';
             this.elements.showMoreBtn.disabled = false;
         }
-    }
+    },
 
-    updateLoadMoreButton() {
+    updateLoadMoreButton: function() {
         if (this.hasMoreResults && this.currentQuery) {
             this.elements.loadMoreContainer.classList.remove('hidden');
         } else {
             this.elements.loadMoreContainer.classList.add('hidden');
         }
-    }
+    },
 
-    showError(message) {
+    showError: function(message) {
         this.elements.errorText.textContent = message;
         this.elements.errorMessage.classList.remove('hidden');
-    }
+    },
 
-    hideError() {
+    hideError: function() {
         this.elements.errorMessage.classList.add('hidden');
-    }
+    },
 
-    showNoResults() {
+    showNoResults: function() {
         this.elements.searchResult.innerHTML = `
             <div class="no-results">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
@@ -394,23 +442,23 @@ class SmartImageSearchEngine {
                 <p>Try adjusting your search terms or filters</p>
             </div>
         `;
-    }
+    },
 
-    clearResults() {
+    clearResults: function() {
         this.elements.searchResult.innerHTML = '';
         this.elements.searchStats.classList.add('hidden');
         this.elements.loadMoreContainer.classList.add('hidden');
         this.hideError();
-    }
+    },
 
     // Analytics & Metrics
-    updateSearchStats(totalResults, responseTime, fromCache) {
+    updateSearchStats: function(totalResults, responseTime, fromCache) {
         this.elements.resultsCount.textContent = `${totalResults.toLocaleString()} results`;
         this.elements.searchTime.textContent = `Search time: ${Math.round(responseTime)}ms${fromCache ? ' (cached)' : ''}`;
         this.elements.lastUpdated.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
-    }
+    },
 
-    trackSearch(query, responseTime) {
+    trackSearch: function(query, responseTime) {
         this.searchMetrics.totalSearches++;
         this.searchMetrics.totalResponseTime += responseTime;
         
@@ -426,25 +474,46 @@ class SmartImageSearchEngine {
         }
 
         this.saveMetricsToStorage();
-    }
+    },
 
-    saveMetricsToStorage() {
+    saveMetricsToStorage: function() {
         localStorage.setItem('totalSearches', this.searchMetrics.totalSearches.toString());
         localStorage.setItem('totalResponseTime', this.searchMetrics.totalResponseTime.toString());
         localStorage.setItem('searchHistory', JSON.stringify(this.searchMetrics.searchHistory));
         localStorage.setItem('cacheHits', this.searchMetrics.cacheHits.toString());
-    }
+    },
 
-    loadStoredData() {
+    loadStoredData: function() {
         // Load any previously stored search preferences
         const lastQuery = localStorage.getItem('lastQuery');
         if (lastQuery) {
             this.elements.searchBox.value = lastQuery;
         }
-    }
+        
+        // Load metrics from storage
+        const totalSearches = localStorage.getItem('totalSearches');
+        if (totalSearches) {
+            this.searchMetrics.totalSearches = parseInt(totalSearches, 10);
+        }
+        
+        const totalResponseTime = localStorage.getItem('totalResponseTime');
+        if (totalResponseTime) {
+            this.searchMetrics.totalResponseTime = parseFloat(totalResponseTime);
+        }
+        
+        const searchHistory = localStorage.getItem('searchHistory');
+        if (searchHistory) {
+            this.searchMetrics.searchHistory = JSON.parse(searchHistory);
+        }
+        
+        const cacheHits = localStorage.getItem('cacheHits');
+        if (cacheHits) {
+            this.searchMetrics.cacheHits = parseInt(cacheHits, 10);
+        }
+    },
 
     // Public methods for analytics modal
-    getAnalytics() {
+    getAnalytics: function() {
         const avgResponseTime = this.searchMetrics.totalSearches > 0 
             ? Math.round(this.searchMetrics.totalResponseTime / this.searchMetrics.totalSearches)
             : 0;
@@ -462,18 +531,20 @@ class SmartImageSearchEngine {
             cacheHitRate,
             recentSearches: this.searchMetrics.searchHistory
         };
-    }
+    },
 
-    getMostPopularQuery() {
+    getMostPopularQuery: function() {
         const queryCount = {};
-        this.searchMetrics.searchHistory.forEach(search => {
+        const self = this;
+        
+        this.searchMetrics.searchHistory.forEach(function(search) {
             queryCount[search.query] = (queryCount[search.query] || 0) + 1;
         });
 
         let mostPopular = 'None';
         let maxCount = 0;
         
-        Object.entries(queryCount).forEach(([query, count]) => {
+        Object.entries(queryCount).forEach(function([query, count]) {
             if (count > maxCount) {
                 maxCount = count;
                 mostPopular = query;
@@ -485,15 +556,13 @@ class SmartImageSearchEngine {
 }
 
 // Initialize the application
-let searchEngine;
-
-document.addEventListener('DOMContentLoaded', () => {
-    searchEngine = new SmartImageSearchEngine();
+document.addEventListener('DOMContentLoaded', function() {
+    imageSearch.init();
 });
 
-// Global functions for modal controls
+// Analytics modal functions
 function showAnalytics() {
-    const analytics = searchEngine.getAnalytics();
+    const analytics = imageSearch.getAnalytics();
     const modal = document.getElementById('analytics-modal');
     
     // Update analytics display
@@ -505,7 +574,7 @@ function showAnalytics() {
     // Update recent searches
     const recentList = document.getElementById('recent-searches-list');
     recentList.innerHTML = '';
-    analytics.recentSearches.forEach(search => {
+    analytics.recentSearches.forEach(function(search) {
         const li = document.createElement('li');
         li.innerHTML = `
             <span class="search-query">${search.query}</span>
