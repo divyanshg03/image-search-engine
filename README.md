@@ -30,12 +30,6 @@ Simply open `index.html` in your browser to see the application in action! The a
 - **Input Debouncing**: Simple timeout to prevent excessive API calls
 - **Clean Code**: Organized JavaScript with object-literal pattern
 
-### 📊 **Built-in Analytics Dashboard**
-- Real-time search metrics
-- Cache hit rate monitoring
-- Response time tracking
-- Search history with local storage
-- Performance insights
 
 ## 🛠 Technologies Used
 
