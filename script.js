@@ -406,20 +406,37 @@ const imageSearch = {
         
         if (isLoading) {
             this.elements.loadingOverlay.classList.remove('hidden');
-            this.elements.showMoreBtn.querySelector('.btn-text').textContent = 'Loading...';
-            this.elements.showMoreBtn.disabled = true;
+            if (this.elements.showMoreBtn) {
+                const btnText = this.elements.showMoreBtn.querySelector('.btn-text');
+                if (btnText) {
+                    btnText.textContent = 'Loading...';
+                }
+                this.elements.showMoreBtn.disabled = true;
+            }
         } else {
             this.elements.loadingOverlay.classList.add('hidden');
-            this.elements.showMoreBtn.querySelector('.btn-text').textContent = 'Load More Images';
-            this.elements.showMoreBtn.disabled = false;
+            if (this.elements.showMoreBtn) {
+                const btnText = this.elements.showMoreBtn.querySelector('.btn-text');
+                if (btnText) {
+                    btnText.textContent = 'Load More Images';
+                }
+                this.elements.showMoreBtn.disabled = false;
+            }
         }
     },
 
     updateLoadMoreButton: function() {
+        console.log('updateLoadMoreButton called:', {
+            hasMoreResults: this.hasMoreResults,
+            currentQuery: this.currentQuery
+        });
+        
         if (this.hasMoreResults && this.currentQuery) {
             this.elements.loadMoreContainer.classList.remove('hidden');
+            console.log('Load more button shown');
         } else {
             this.elements.loadMoreContainer.classList.add('hidden');
+            console.log('Load more button hidden');
         }
     },
 
