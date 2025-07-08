@@ -17,7 +17,7 @@ const imageSearch = {
     // API Configuration
     accessKey: "lWzvu2EbJpIytiuOpu4RydibVjMOytYV4DyVMosG2aU",
     baseURL: "https://api.unsplash.com/search/photos",
-    perPage: 50,
+    perPage: 20,
     
     // State Management
     currentQuery: "",
