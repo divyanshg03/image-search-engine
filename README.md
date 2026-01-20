@@ -337,13 +337,7 @@ This is a portfolio project, but suggestions and improvements are welcome!
 
 MIT License - feel free to use this project for learning and portfolio purposes.
 
-## 📞 Contact
 
-**Your Name** - [your.email@domain.com](mailto:your.email@domain.com)
-
-**Portfolio**: [your-portfolio.com](https://your-portfolio.com)  
-**LinkedIn**: [linkedin.com/in/yourprofile](https://linkedin.com/in/yourprofile)  
-**GitHub**: [github.com/yourusername](https://github.com/yourusername)
 
 ---
 
